@@ -2,14 +2,14 @@ package com.my.model.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class DbAccess {
 
     private Connection con = null;
-    private Statement ps = null;
+    private PreparedStatement ps = null;
     private ResultSet rs = null;
 
     public void open() {
@@ -21,8 +21,6 @@ public class DbAccess {
         try {
             Class.forName(driverName);
             con = DriverManager.getConnection(jdbcUrl, userId, userPass);
-            ps = con.createStatement();
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,22 +43,24 @@ public class DbAccess {
     }
 
     public ResultSet executeQuery(String sql) {
-        if (ps != null) {
-            try {
-                rs = ps.executeQuery(sql);
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        try {
+            ps = con.prepareStatement(sql);
+            rs = ps.executeQuery(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return rs;
     }
 
     public int executeUpdate(String sql) throws SQLException {
+
         int num = 0;
-        if (ps != null) {
-            num = ps.executeUpdate(sql);
+        try {
+            ps = con.prepareStatement(sql);
+            num = ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return num;
-
     }
 }

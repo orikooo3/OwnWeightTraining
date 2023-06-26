@@ -38,6 +38,9 @@ import com.my.model.database.DbAccess;
 
 public class MainView extends JFrame implements ActionListener, ItemListener {
 
+    // 定数
+    private static String COMMA = ","; // コンマ
+
     // コンテイナー
     private Container cp;
 
@@ -151,7 +154,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         todaysButton1.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                todaysTrainingAll();
+                todaysTrainingSelect();
             }
         });
         homePanel.add(todaysPanel2);
@@ -329,9 +332,9 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         add(cards);
 
         // データ表示
-        exerciseAll(); // 種目表示
-        trainingAll(); // 記録表示
-        comboBoxAll(); // コンボボックスのデータ表示
+        exerciseSelect(); // 種目表示
+        trainingSelect(); // 記録表示
+        comboBoxSelect(); // コンボボックスのデータ表示
 
     }
 
@@ -355,7 +358,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             exerciseUpdate();
         } else if (obj == deleteRecordButton1) {
             exerciseDelete();
-
             /*
              * addRecordPanel 追加、更新、削除
              */
@@ -406,6 +408,55 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         dialog.setVisible(true);
     }
 
+    public boolean isExerciseIdUsed(int exerciseId) throws SQLException {
+        boolean isUsed = false;
+        DbAccess db = new DbAccess();
+        db.open();
+
+        try {
+            String query = "SELECT COUNT(*) FROM exercises WHERE exercise_id = " + exerciseId;
+            ResultSet resultSet = db.executeQuery(query);
+
+            if (resultSet.next()) {
+                int count = resultSet.getInt(1);
+                if (count > 0) {
+                    isUsed = true;
+                }
+            }
+
+            resultSet.close();
+        } finally {
+            db.close();
+        }
+
+        return isUsed;
+    }
+
+    public void todaysTrainingSelect() {
+        // 全件表示
+        String record_date = todaysTextField1.getText();
+
+        try {
+            // SQL文の組み立て
+            // 画面で指定された条件を組み込む
+            String mySql = "SELECT  *  FROM records WHERE date = '" + record_date + " ' ";
+            System.out.println(mySql);
+
+            // データを取得し、JTableにセットする TableModel の形に編集
+            DbAccess db = new DbAccess();
+            // データベースに接続
+            db.open();
+            // 検索するSQL実行
+            ResultSet rs = db.executeQuery(mySql);
+            // データ表示
+            todaysTrainingDisplay(rs);
+            // オブジェクトを解放
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void todaysTrainingDisplay(ResultSet rs) {
         try {
             ArrayList<String[]> list = new ArrayList<String[]>();
@@ -435,32 +486,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         }
     }
 
-    public void todaysTrainingAll() {
-        // 全件表示
-        String record_date = todaysTextField1.getText();
-
-        try {
-            // SQL文の組み立て
-            // 画面で指定された条件を組み込む
-            String mySql = "SELECT  *  FROM records WHERE date = '" + record_date + " ' ";
-            System.out.println(mySql);
-
-            // データを取得し、JTableにセットする TableModel の形に編集
-            DbAccess db = new DbAccess();
-            // データベースに接続
-            db.open();
-            // 検索するSQL実行
-            ResultSet rs = db.executeQuery(mySql);
-            // データ表示
-            todaysTrainingDisplay(rs);
-            // オブジェクトを解放
-            db.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void comboBoxAll() {
+    public void comboBoxSelect() {
         // 全件表示
         try {
             // SQL文の組み立て
@@ -504,6 +530,29 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         }
     }
 
+    public void exerciseSelect() {
+        // 全件表示
+        try {
+            // SQL文の組み立て
+            // 画面で指定された条件を組み込む
+            String mySql = "SELECT * FROM exercises ORDER BY exercise_id";
+            System.out.println("種目  " + mySql);
+
+            // データを取得し、JTableにセットする TableModel の形に編集
+            DbAccess db = new DbAccess();
+            // データベースに接続
+            db.open();
+            // 検索するSQL実行
+            ResultSet rs = db.executeQuery(mySql);
+            // データ表示
+            exerciseDisplay(rs);
+            // オブジェクトを解放
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void exerciseDisplay(ResultSet rs) {
         try {
             ArrayList<String[]> list = new ArrayList<String[]>();
@@ -524,74 +573,143 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
     }
 
     public void exerciseInsert() {
+        String title = "エラー";
 
         try {
+
             String exerciseIdText = newExerciseTextField1.getText();
+
+            // ID入力が入力されてない
             if (exerciseIdText.isEmpty()) {
-                throw new Exception("Exercise IDが入力されていません。");
+                JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
+                return;
             }
+
             int exercise_id = Integer.parseInt(exerciseIdText);
 
-            String exercise_name = newExerciseTextField2.getText();
-            if (exercise_name.isEmpty()) {
-                throw new Exception("種目が入力されていません。");
+            // IDが既に使われてるとき
+            if (isExerciseIdUsed(exercise_id)) {
+                JOptionPane.showMessageDialog(null, "IDは既に使用されています", title, JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
+            // IDが数字じゃない
+            if (exercise_id < 0) {
+                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String exercise_name = newExerciseTextField2.getText();
+
+            // 種目が入力されていない
+            if (exercise_name.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "種目が入力されていません", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 種目がすでに存在するとき
+            if (exerciseComboBox1.getItemCount() > 1 && exerciseComboBox1.getSelectedItem().equals(exercise_name)) {
+                JOptionPane.showMessageDialog(null, "種目がすでに存在します", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // トレーニングパネルのコンボボックスにデータを追加
             exerciseComboBox1.addItem(exercise_name);
             newExerciseTextField2.setText("");
 
-            if (exerciseComboBox1.getItemCount() > 1 && exerciseComboBox1.getSelectedItem().equals(exercise_name)) {
-                throw new Exception("種目がすでに存在しています。");
-            }
+            StringBuffer mySql = new StringBuffer();
+            mySql.append("INSERT INTO exercises VALUES(");
+            mySql.append(" ' " + exercise_id + " ' ");
+            mySql.append(COMMA);
+            mySql.append(" ' " + exercise_name + " ' ");
+            mySql.append(")");
 
-            if (exercise_id < 0) {
-                throw new Exception("Exercise IDには正の整数値を入力してください。");
-            }
-
-            String mySql = "INSERT INTO exercises VALUES('" + exercise_id + "', '" + exercise_name + "')";
             System.out.println(mySql);
             DbAccess db = new DbAccess();
             db.open();
-            db.executeUpdate(mySql);
+            db.executeUpdate(mySql.toString());
             db.close();
-            exerciseAll();
+            exerciseSelect();
 
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "SQLエラーが発生しました: " + e.getMessage(), "エ", JOptionPane.ERROR_MESSAGE);
+
         } catch (NumberFormatException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Exercise IDには整数値を入力してください。", "エラー", JOptionPane.ERROR_MESSAGE);
+
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(null, e.getMessage(), "エラー", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     public void exerciseUpdate() {
+        // メッセージボックスのタイトル
+        String title = "エラー";
 
-        // IDと種目名
-        int exercise_id = Integer.parseInt(newExerciseTextField1.getText());
-        String exercise_name = newExerciseTextField2.getText();
-        if ((exercise_name == null) || (exercise_name.equals(""))) {
-            return;
-        }
-        // コンボボックスのデータを更新
-        model.insertElementAt(exercise_name, exercise_id);
-        model.removeElementAt(exercise_id + 1);
-        newExerciseTextField1.setText("");
-        newExerciseTextField2.setText("");
         try {
-            String mySql = "UPDATE exercises SET exercise_name = '" + exercise_name + "' WHERE exercise_id ="
-                    + exercise_id;
+            String exerciseIdText = newExerciseTextField1.getText();
+            // ID入力が入力されてない
+            if (exerciseIdText.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int exercise_id = Integer.parseInt(exerciseIdText);
+
+            // IDが数字じゃない
+            if (exercise_id < 0) {
+                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String exercise_name = newExerciseTextField2.getText();
+
+            // 種目が入力されていない
+            if (exercise_name.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "種目が入力されていません", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // 種目がすでに存在するかチェック
+            if (exerciseComboBox1.getItemCount() > 0 && exerciseComboBox1.getSelectedItem().equals(exercise_name)) {
+                JOptionPane.showMessageDialog(null, "種目がすでに存在します", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // コンボボックスのデータを更新
+            int index = exercise_id - 1;
+            if (index >= 0 && index < model.getSize()) {
+                model.removeElementAt(index);
+                model.insertElementAt(exercise_name, index);
+            }
+
+            // データベースの種目を更新
+            StringBuffer mySql = new StringBuffer();
+            mySql.append("UPDATE exercises SET ");
+            mySql.append("exercise_name = ");
+            mySql.append("'" + exercise_name + "'");
+            mySql.append(" WHERE exercise_id = ");
+            mySql.append(exercise_id);
             System.out.println(mySql);
 
             DbAccess db = new DbAccess();
             db.open();
-            db.executeUpdate(mySql);
+            int rowsAffected = db.executeUpdate(mySql.toString());
             db.close();
-            exerciseAll();
+
+            if (rowsAffected > 0) {
+                newExerciseTextField1.setText("");
+                newExerciseTextField2.setText("");
+                exerciseSelect();
+            } else {
+                JOptionPane.showMessageDialog(null, "指定されたIDが見つかりません", title, JOptionPane.ERROR_MESSAGE);
+            }
+            newExerciseTextField1.setText("");
+            newExerciseTextField2.setText("");
+            exerciseSelect();
         } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
@@ -599,44 +717,78 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
     }
 
     public void exerciseDelete() {
-        int exercise_id = Integer.parseInt(newExerciseTextField1.getText());
-        int size = model.getSize();
-        if ((exercise_id < 0) || (exercise_id >= size)) {
-            newExerciseTextField1.setText("");
-            return;
-        }
-        // コンボボックスのデータを削除
-        model.removeElementAt(exercise_id);
-        newExerciseTextField1.setText("");
+        // メッセージボックスのタイトル
+        String title = "エラー";
+
         try {
-            String mySql = "DELETE FROM  exercises WHERE  exercise_id = " + exercise_id;
+
+            String exerciseIdText = newExerciseTextField1.getText();
+
+            // ID入力が入力されていない
+            if (exerciseIdText.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int exercise_id = Integer.parseInt(exerciseIdText);
+
+            // IDが数字じゃない
+            if (exercise_id < 0) {
+                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String exercise_name = newExerciseTextField2.getText();
+
+            // 種目が入力されていない
+            if (exercise_name.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "種目が入力されていません", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            /* 明日の課題: 削除したい種目が一致しないときの処理 2023/06/25 */
+            if (exercise_name != newExerciseTextField2.getText()) {
+                JOptionPane.showMessageDialog(null, "種目が一致しません", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // コンボボックスのデータを削除
+            model.removeElementAt(exercise_id);
+            newExerciseTextField1.setText("");
+
+            StringBuffer mySql = new StringBuffer();
+            mySql.append("DELETE FROM");
+            mySql.append(" exercises");
+            mySql.append(" WHERE");
+            mySql.append(" exercise_id = ");
+            mySql.append(exercise_id);
             System.out.println(mySql);
 
             DbAccess db = new DbAccess();
             db.open();
-            db.executeUpdate(mySql);
-            if (exercise_id > 0) {
-                // IDの更新
-                String updateSql = "UPDATE exercises SET exercise_id = exercise_id - 1 WHERE exercise_id > "
-                        + exercise_id;
-                db.executeUpdate(updateSql);
-            }
+            db.executeUpdate(mySql.toString());
             db.close();
-            exerciseAll();
+
+            newExerciseTextField1.setText("");
+            newExerciseTextField2.setText("");
+            exerciseSelect();
         } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (NumberFormatException e) {
             e.printStackTrace();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
-    public void exerciseAll() {
+    public void trainingSelect() {
         // 全件表示
         try {
             // SQL文の組み立て
             // 画面で指定された条件を組み込む
-            String mySql = "SELECT * FROM exercises ORDER BY exercise_id";
-            System.out.println("種目  " + mySql);
+            String mySql = "SELECT * FROM records ORDER BY record_id";
+            System.out.println("トレーニング  " + mySql);
 
             // データを取得し、JTableにセットする TableModel の形に編集
             DbAccess db = new DbAccess();
@@ -645,7 +797,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             // 検索するSQL実行
             ResultSet rs = db.executeQuery(mySql);
             // データ表示
-            exerciseDisplay(rs);
+            trainingDisplay(rs);
             // オブジェクトを解放
             db.close();
         } catch (Exception e) {
@@ -693,7 +845,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             db.open();
             db.executeUpdate(mySql);
             db.close();
-            trainingAll();
+            trainingSelect();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -720,7 +872,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             db.open();
             db.executeUpdate(mySql);
             db.close();
-            trainingAll();
+            trainingSelect();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -744,32 +896,9 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             String updateSql = "UPDATE records SET id = id - 1 WHERE id > 0";
             db.executeUpdate(updateSql);
             db.close();
-            trainingAll();
+            trainingSelectl();
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void trainingAll() {
-        // 全件表示
-        try {
-            // SQL文の組み立て
-            // 画面で指定された条件を組み込む
-            String mySql = "SELECT * FROM records ORDER BY record_id";
-            System.out.println("トレーニング  " + mySql);
-
-            // データを取得し、JTableにセットする TableModel の形に編集
-            DbAccess db = new DbAccess();
-            // データベースに接続
-            db.open();
-            // 検索するSQL実行
-            ResultSet rs = db.executeQuery(mySql);
-            // データ表示
-            trainingDisplay(rs);
-            // オブジェクトを解放
-            db.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
