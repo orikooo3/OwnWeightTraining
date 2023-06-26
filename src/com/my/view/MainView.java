@@ -613,21 +613,22 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
                 return;
             }
 
-            // トレーニングパネルのコンボボックスにデータを追加
-            exerciseComboBox1.addItem(exercise_name);
-            newExerciseTextField2.setText("");
-
             StringBuffer mySql = new StringBuffer();
             mySql.append("INSERT INTO exercises VALUES(");
             mySql.append(" ' " + exercise_id + " ' ");
             mySql.append(COMMA);
             mySql.append(" ' " + exercise_name + " ' ");
             mySql.append(")");
-
             System.out.println(mySql);
+
             DbAccess db = new DbAccess();
             db.open();
             db.executeUpdate(mySql.toString());
+
+            // トレーニングパネルのコンボボックスにデータを追加
+            exerciseComboBox1.addItem(exercise_name);
+            newExerciseTextField2.setText("");
+
             db.close();
             exerciseSelect();
 
@@ -676,13 +677,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
                 return;
             }
 
-            // コンボボックスのデータを更新
-            int index = exercise_id - 1;
-            if (index >= 0 && index < model.getSize()) {
-                model.removeElementAt(index);
-                model.insertElementAt(exercise_name, index);
-            }
-
             // データベースの種目を更新
             StringBuffer mySql = new StringBuffer();
             mySql.append("UPDATE exercises SET ");
@@ -691,7 +685,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             mySql.append(" WHERE exercise_id = ");
             mySql.append(exercise_id);
             System.out.println(mySql);
-
             DbAccess db = new DbAccess();
             db.open();
             int rowsAffected = db.executeUpdate(mySql.toString());
@@ -704,6 +697,14 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             } else {
                 JOptionPane.showMessageDialog(null, "指定されたIDが見つかりません", title, JOptionPane.ERROR_MESSAGE);
             }
+
+            // コンボボックスのデータを更新
+            int index = exercise_id - 1;
+            if (index >= 0 && index < model.getSize()) {
+                model.removeElementAt(index);
+                model.insertElementAt(exercise_name, index);
+            }
+
             newExerciseTextField1.setText("");
             newExerciseTextField2.setText("");
             exerciseSelect();
@@ -732,6 +733,13 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
             int exercise_id = Integer.parseInt(exerciseIdText);
 
+            // コンボボックスのサイズを取得
+            int size = model.getSize();
+            if ((exercise_id < 0) || (exercise_id < size)) {
+                JOptionPane.showMessageDialog(null, "データがありません", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             // IDが数字じゃない
             if (exercise_id < 0) {
                 JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
@@ -746,29 +754,35 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
                 return;
             }
 
-            /* 明日の課題: 削除したい種目が一致しないときの処理 2023/06/25 */
-            if (exercise_name != newExerciseTextField2.getText()) {
-                JOptionPane.showMessageDialog(null, "種目が一致しません", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // コンボボックスのデータを削除
-            model.removeElementAt(exercise_id);
-            newExerciseTextField1.setText("");
-
+            // DELETE
             StringBuffer mySql = new StringBuffer();
             mySql.append("DELETE FROM");
             mySql.append(" exercises");
             mySql.append(" WHERE");
             mySql.append(" exercise_id = ");
-            mySql.append(exercise_id);
+            mySql.append(exercise_id); // index0からだから
             System.out.println(mySql);
 
             DbAccess db = new DbAccess();
             db.open();
             db.executeUpdate(mySql.toString());
-            db.close();
 
+            // コンボボックスのデータを削除
+            model.removeElementAt(exercise_id - 1);
+            newExerciseTextField1.setText("");
+            if (exercise_id > 0) {
+                // IDの更新
+                StringBuffer updateSql = new StringBuffer();
+                updateSql.append(" UPDATE exercises SET");
+                updateSql.append(" exercise_id = ");
+                updateSql.append(exercise_id - 1);
+                updateSql.append(" WHERE");
+                updateSql.append(" exercise_id >");
+                updateSql.append(exercise_id);
+
+                db.executeUpdate(updateSql.toString());
+                db.close();
+            }
             newExerciseTextField1.setText("");
             newExerciseTextField2.setText("");
             exerciseSelect();
@@ -779,7 +793,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     public void trainingSelect() {
@@ -896,7 +909,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             String updateSql = "UPDATE records SET id = id - 1 WHERE id > 0";
             db.executeUpdate(updateSql);
             db.close();
-            trainingSelectl();
+            trainingSelect();
         } catch (SQLException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -908,7 +921,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         MainView frame = new MainView();
 
         frame.setTitle("    自重トレmemo    ");
-        frame.setBounds(100, 100, 680, 700);
+        frame.setBounds(100, 100, 600, 550);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         frame.setVisible(true);
