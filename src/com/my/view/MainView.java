@@ -40,6 +40,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
     // 定数
     private static String COMMA = ","; // コンマ
+    private static String SINGLE_QUOTATION = "'"; // シングルクオート
 
     // コンテイナー
     private Container cp;
@@ -68,6 +69,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
     private JTable table2;
     private JTextField newExerciseTextField1, newExerciseTextField2;
     private JScrollPane scrollPane2;
+    private DefaultTableModel tm;
 
     // トレーニング
     private JPanel addRecordPanel, tittlePanel, setNumberPanel, screenTransitionPanel3, exercisePanel2;
@@ -387,6 +389,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
     }
 
     public static void showCalendarDialog(JFrame parentFrame, JTextField textField) {
+
         JDialog dialog = new JDialog(parentFrame, "カレンダー選択", true);
         dialog.setLayout(new BorderLayout());
         dialog.setSize(300, 250);
@@ -408,6 +411,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         dialog.setVisible(true);
     }
 
+    // ID使用確認
     public boolean isExerciseIdUsed(int exerciseId) throws SQLException {
         boolean isUsed = false;
         DbAccess db = new DbAccess();
@@ -430,6 +434,12 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         }
 
         return isUsed;
+    }
+
+    // IDが数字かチェック
+    public boolean containsRomanCharacters(String input) {
+        String pattern = ".*\\D+.*";
+        return input.matches(pattern);
     }
 
     public void todaysTrainingSelect() {
@@ -564,7 +574,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             }
             // JTable にセット
             String[] columnHeader = { "ID", "種目" };
-            DefaultTableModel tm = new DefaultTableModel((String[][]) list.toArray(new String[0][0]), columnHeader);
+            tm = new DefaultTableModel((String[][]) list.toArray(new String[0][0]), columnHeader);
             table2.setModel(tm);
 
         } catch (Exception e) {
@@ -578,6 +588,12 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         try {
 
             String exerciseIdText = newExerciseTextField1.getText();
+
+            // IDが数字じゃない
+            if (containsRomanCharacters(exerciseIdText)) {
+                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             // ID入力が入力されてない
             if (exerciseIdText.isEmpty()) {
@@ -594,7 +610,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             }
 
             // IDが数字じゃない
-            if (exercise_id < 0) {
+            if (exercise_id < 0 || containsRomanCharacters(exerciseIdText)) {
                 JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -608,16 +624,16 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             }
 
             // 種目がすでに存在するとき
-            if (exerciseComboBox1.getItemCount() > 1 && exerciseComboBox1.getSelectedItem().equals(exercise_name)) {
+            if (exerciseComboBox1.getItemCount() > 0 && exerciseComboBox1.getSelectedItem().equals(exercise_name)) {
                 JOptionPane.showMessageDialog(null, "種目がすでに存在します", title, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             StringBuffer mySql = new StringBuffer();
             mySql.append("INSERT INTO exercises VALUES(");
-            mySql.append(" ' " + exercise_id + " ' ");
+            mySql.append(SINGLE_QUOTATION + exercise_id + SINGLE_QUOTATION);
             mySql.append(COMMA);
-            mySql.append(" ' " + exercise_name + " ' ");
+            mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION);
             mySql.append(")");
             System.out.println(mySql);
 
@@ -626,7 +642,8 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             db.executeUpdate(mySql.toString());
 
             // トレーニングパネルのコンボボックスにデータを追加
-            exerciseComboBox1.addItem(exercise_name);
+            model.insertElementAt(exercise_name, exercise_id - 1);
+            newExerciseTextField1.setText("");
             newExerciseTextField2.setText("");
 
             db.close();
@@ -649,6 +666,13 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
         try {
             String exerciseIdText = newExerciseTextField1.getText();
+
+            // IDが数字じゃない
+            if (containsRomanCharacters(exerciseIdText)) {
+                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             // ID入力が入力されてない
             if (exerciseIdText.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
@@ -656,12 +680,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             }
 
             int exercise_id = Integer.parseInt(exerciseIdText);
-
-            // IDが数字じゃない
-            if (exercise_id < 0) {
-                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
 
             String exercise_name = newExerciseTextField2.getText();
 
@@ -681,7 +699,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             StringBuffer mySql = new StringBuffer();
             mySql.append("UPDATE exercises SET ");
             mySql.append("exercise_name = ");
-            mySql.append("'" + exercise_name + "'");
+            mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION);
             mySql.append(" WHERE exercise_id = ");
             mySql.append(exercise_id);
             System.out.println(mySql);
@@ -725,6 +743,12 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
             String exerciseIdText = newExerciseTextField1.getText();
 
+            // IDが数字じゃない
+            if (containsRomanCharacters(exerciseIdText)) {
+                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             // ID入力が入力されていない
             if (exerciseIdText.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
@@ -732,25 +756,29 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             }
 
             int exercise_id = Integer.parseInt(exerciseIdText);
+            String exercise_name = newExerciseTextField2.getText();
 
             // コンボボックスのサイズを取得
-            int size = model.getSize();
-            if ((exercise_id < 0) || (exercise_id < size)) {
+            int comboSize = model.getSize();
+            if ((exercise_id < 0) || (0 == comboSize)) {
                 JOptionPane.showMessageDialog(null, "データがありません", title, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            // IDが数字じゃない
-            if (exercise_id < 0) {
-                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
+            // 削除対象の行のIDが存在するか確認
+            boolean idExists = false;
+            /*
+             * iにIDを指定してそのIDに設定されてる種目を取得し、テキストフィールドに入力した種目と比較し同じだったらbreakする。 同じでなかったら
+             */
+            String tableName = model.getElementAt(exercise_id - 1).toString();
+            if (exercise_name.equals(tableName)) {
+                idExists = true;
                 return;
             }
 
-            String exercise_name = newExerciseTextField2.getText();
-
-            // 種目が入力されていない
-            if (exercise_name.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "種目が入力されていません", title, JOptionPane.ERROR_MESSAGE);
+            // 削除対象の種目がない
+            if (!idExists) {
+                JOptionPane.showMessageDialog(null, "指定された種目は存在しません", title, JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -760,31 +788,18 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             mySql.append(" exercises");
             mySql.append(" WHERE");
             mySql.append(" exercise_id = ");
-            mySql.append(exercise_id); // index0からだから
+            mySql.append(exercise_id);
             System.out.println(mySql);
+
+            // コンボボックスのデータを削除
+            model.removeElementAt(exercise_id - 1); // indexが0からだから
+            newExerciseTextField1.setText("");
+            newExerciseTextField2.setText("");
 
             DbAccess db = new DbAccess();
             db.open();
             db.executeUpdate(mySql.toString());
-
-            // コンボボックスのデータを削除
-            model.removeElementAt(exercise_id - 1);
-            newExerciseTextField1.setText("");
-            if (exercise_id > 0) {
-                // IDの更新
-                StringBuffer updateSql = new StringBuffer();
-                updateSql.append(" UPDATE exercises SET");
-                updateSql.append(" exercise_id = ");
-                updateSql.append(exercise_id - 1);
-                updateSql.append(" WHERE");
-                updateSql.append(" exercise_id >");
-                updateSql.append(exercise_id);
-
-                db.executeUpdate(updateSql.toString());
-                db.close();
-            }
-            newExerciseTextField1.setText("");
-            newExerciseTextField2.setText("");
+            db.close();
             exerciseSelect();
         } catch (SQLException e) {
             e.printStackTrace();
