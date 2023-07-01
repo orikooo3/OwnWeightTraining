@@ -269,21 +269,20 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
         addRecordPanel.add(tittlePanel);
 
-        // テキストフィールド
-        // 種目
+        // フィールド
         setNumberPanel = new JPanel();
         textField1 = new JTextField(13);
         textField1.setFont(new Font("メイリオ", Font.BOLD, 12));
         setNumberPanel.add(textField1);
-        // セット数
+
         textField2 = new JTextField(2);
         textField2.setFont(new Font("メイリオ", Font.BOLD, 12));
         setNumberPanel.add(textField2);
-        // 回数
+
         textField3 = new JTextField(2);
         textField3.setFont(new Font("メイリオ", Font.BOLD, 12));
         setNumberPanel.add(textField3);
-        // 日付
+
         textField4 = new JTextField(9);
         textField4.setFont(new Font("メイリオ", Font.BOLD, 12));
         setNumberPanel.add(textField4);
@@ -858,59 +857,16 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
     }
 
     public void trainingInsert() {
-        String title = "エラー";
-
+        // 追加
+        String exercise = textField1.getText();
+        textField1.setText("");
+        String set_times = textField2.getText();
+        textField2.setText("");
+        String reps = textField3.getText();
+        textField3.setText("");
+        String date = textField4.getText();
+        textField4.setText("");
         try {
-
-            String exerciseIdText = newExerciseTextField1.getText();
-
-            // IDが数字じゃない
-            if (containsRomanCharacters(exerciseIdText)) {
-                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // ID入力が入力されてない
-            if (exerciseIdText.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            int exercise_id = Integer.parseInt(exerciseIdText);
-
-            // IDが既に使われてるとき
-            if (isExerciseIdUsed(exercise_id)) {
-                JOptionPane.showMessageDialog(null, "IDは既に使用されています", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // IDが数字じゃない
-            if (exercise_id < 0 || containsRomanCharacters(exerciseIdText)) {
-                JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            String exercise_name = newExerciseTextField2.getText();
-
-            // 種目が入力されていない
-            if (exercise_name.isEmpty()) {
-                JOptionPane.showMessageDialog(null, "種目が入力されていません", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // 種目がすでに存在するとき
-            if (exerciseComboBox1.getItemCount() > 0 && exerciseComboBox1.getSelectedItem().equals(exercise_name)) {
-                JOptionPane.showMessageDialog(null, "種目がすでに存在します", title, JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            String exercise = textField1.getText();
-            textField1.setText("");
-            String set_times = textField2.getText();
-            textField2.setText("");
-            String reps = textField3.getText();
-            textField3.setText("");
-            String date = textField4.getText();
-            textField4.setText("");
             String mySql = "INSERT INTO records VALUES ( '" + exercise + "', '" + set_times + "', '" + reps + "', '"
                     + date + "')";
             DbAccess db = new DbAccess();
