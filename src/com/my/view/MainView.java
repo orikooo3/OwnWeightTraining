@@ -540,29 +540,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         }
     }
 
-    public void exerciseSelect() {
-        // 全件表示
-        try {
-            // SQL文の組み立て
-            // 画面で指定された条件を組み込む
-            String mySql = "SELECT * FROM exercises ORDER BY exercise_id";
-            System.out.println("種目  " + mySql);
-
-            // データを取得し、JTableにセットする TableModel の形に編集
-            DbAccess db = new DbAccess();
-            // データベースに接続
-            db.open();
-            // 検索するSQL実行
-            ResultSet rs = db.executeQuery(mySql);
-            // データ表示
-            exerciseDisplay(rs);
-            // オブジェクトを解放
-            db.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public void exerciseDisplay(ResultSet rs) {
         try {
             ArrayList<String[]> list = new ArrayList<String[]>();
@@ -577,6 +554,33 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
             tm = new DefaultTableModel((String[][]) list.toArray(new String[0][0]), columnHeader);
             table2.setModel(tm);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void exerciseSelect() {
+        // 全件表示
+        try {
+            // SQL文の組み立て
+            // 画面で指定された条件を組み込む
+            StringBuffer mySql = new StringBuffer();
+            mySql.append("SELECT * FROM");
+            mySql.append(" exercises");
+            mySql.append(" ORDER BY");
+            mySql.append(" exercise_id");
+            System.out.println(mySql);
+
+            // データを取得し、JTableにセットする TableModel の形に編集
+            DbAccess db = new DbAccess();
+            // データベースに接続
+            db.open();
+            // 検索するSQL実行
+            ResultSet rs = db.executeQuery(mySql.toString());
+            // データ表示
+            exerciseDisplay(rs);
+            // オブジェクトを解放
+            db.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -810,43 +814,19 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         }
     }
 
-    public void trainingSelect() {
-        // 全件表示
-        try {
-            // SQL文の組み立て
-            // 画面で指定された条件を組み込む
-            String mySql = "SELECT * FROM records ORDER BY record_id";
-            System.out.println("トレーニング  " + mySql);
-
-            // データを取得し、JTableにセットする TableModel の形に編集
-            DbAccess db = new DbAccess();
-            // データベースに接続
-            db.open();
-            // 検索するSQL実行
-            ResultSet rs = db.executeQuery(mySql);
-            // データ表示
-            trainingDisplay(rs);
-            // オブジェクトを解放
-            db.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public void trainingDisplay(ResultSet rs) {
         try {
             ArrayList<String[]> list = new ArrayList<String[]>();
             while (rs.next()) {
                 String[] items = new String[5];
-                items[0] = rs.getString("id");
-                items[1] = rs.getString("exercise");
-                items[2] = rs.getString("set_times");
-                items[3] = rs.getString("reps");
-                items[4] = rs.getString("date");
+                items[0] = rs.getString("exercise_name");
+                items[1] = rs.getString("set_times");
+                items[2] = rs.getString("training_reps");
+                items[3] = rs.getString("record_date");
                 list.add(items);
             }
 
-            String[] columnHeader = { "ID", "種目", "セット数", "回数", "日付" };
+            String[] columnHeader = { "種目", "セット数", "回数", "日付" };
             DefaultTableModel tm = new DefaultTableModel((String[][]) list.toArray(new String[0][0]), columnHeader);
             // JTable にセット
             table3.setModel(tm);
@@ -856,22 +836,59 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         }
     }
 
+    public void trainingSelect() {
+        // 全件表示
+        try {
+            // SQL文の組み立て
+            // 画面で指定された条件を組み込む
+            StringBuffer mySql = new StringBuffer();
+            mySql.append("SELECT * FROM");
+            mySql.append(" records");
+            mySql.append(" ORDER BY");
+            mySql.append(" record_id");
+            System.out.println(mySql);
+
+            // データを取得し、JTableにセットする TableModel の形に編集
+            DbAccess db = new DbAccess();
+            // データベースに接続
+            db.open();
+            // 検索するSQL実行
+            ResultSet rs = db.executeQuery(mySql.toString());
+            // データ表示
+            trainingDisplay(rs);
+            // オブジェクトを解放
+            db.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void trainingInsert() {
         // 追加
-        String exercise = textField1.getText();
+        String exercise_name = textField1.getText();
         textField1.setText("");
         String set_times = textField2.getText();
         textField2.setText("");
-        String reps = textField3.getText();
+        String training_reps = textField3.getText();
         textField3.setText("");
-        String date = textField4.getText();
+        String record_date = textField4.getText();
         textField4.setText("");
         try {
-            String mySql = "INSERT INTO records VALUES ( '" + exercise + "', '" + set_times + "', '" + reps + "', '"
-                    + date + "')";
+
+            StringBuffer mySql = new StringBuffer();
+            mySql.append("INSERT INTO");
+            mySql.append(" records");
+            mySql.append(" (exercise_name, set_times, training_reps, record_date)");
+            mySql.append(" VALUES(");
+            mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION + COMMA);
+            mySql.append(set_times + COMMA);
+            mySql.append(training_reps + COMMA);
+            mySql.append(SINGLE_QUOTATION + record_date + SINGLE_QUOTATION + ")");
+            System.out.println(mySql);
+
             DbAccess db = new DbAccess();
             db.open();
-            db.executeUpdate(mySql);
+            db.executeUpdate(mySql.toString());
             db.close();
             trainingSelect();
         } catch (SQLException e) {
@@ -883,22 +900,37 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
     public void trainingUpdate() {
         // 更新
-        String exercise = textField1.getText();
+        String exercise_name = textField1.getText();
         textField1.setText("");
         String set_times = textField2.getText();
         textField2.setText("");
-        String reps = textField3.getText();
+        String training_reps = textField3.getText();
         textField3.setText("");
-        String date = textField4.getText();
+        String record_date = textField4.getText();
         textField4.setText("");
+
         try {
-            String mySql = "UPDATE records SET  exercise = '" + exercise + "', set_times = " + set_times + ", reps = "
-                    + reps + ", date = '" + date + "' WHERE id = " + id;
+            StringBuffer mySql = new StringBuffer();
+            mySql.append(" UPDATE records SET ");
+            mySql.append("exercise_name = ");
+            mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION + COMMA);
+            mySql.append(" set_times = ");
+            mySql.append(set_times + COMMA);
+            mySql.append(" training_reps = ");
+            mySql.append(training_reps + COMMA);
+            mySql.append(" record_date = ");
+            mySql.append(SINGLE_QUOTATION + record_date + SINGLE_QUOTATION);
+            mySql.append(" WHERE  exercise_name = ");
+            mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION);
+            mySql.append(" and ");
+            mySql.append(" record_date = ");
+            mySql.append(SINGLE_QUOTATION + record_date + SINGLE_QUOTATION);
+
             System.out.println(mySql);
 
             DbAccess db = new DbAccess();
             db.open();
-            db.executeUpdate(mySql);
+            db.executeUpdate(mySql.toString());
             db.close();
             trainingSelect();
         } catch (SQLException e) {
@@ -914,15 +946,23 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         String record_date = textField4.getText();
         textField4.setText("");
         try {
-            String mySql = "DELETE FROM records WHERE exercise = '" + exercise_name + "' AND date = '" + record_date
-                    + "'";
+            StringBuffer mySql = new StringBuffer();
+            mySql.append(" DELETE FROM");
+            mySql.append(" records");
+            mySql.append(" WHERE");
+            mySql.append(" exercise_name = ");
+            mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION);
+            mySql.append(" AND");
+            mySql.append(" record_date =");
+            mySql.append(SINGLE_QUOTATION + record_date + SINGLE_QUOTATION);
             System.out.println(mySql);
+
             DbAccess db = new DbAccess();
             db.open();
-            db.executeUpdate(mySql);
+            db.executeUpdate(mySql.toString());
             // IDの更新
-            String updateSql = "UPDATE records SET id = id - 1 WHERE id > 0";
-            db.executeUpdate(updateSql);
+            StringBuffer updateSql = new StringBuffer();
+            db.executeUpdate(updateSql.toString());
             db.close();
             trainingSelect();
         } catch (SQLException e) {
