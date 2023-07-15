@@ -976,7 +976,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
         MainView frame = new MainView();
 
         frame.setTitle("    自重トレmemo    ");
-        frame.setBounds(100, 100, 600, 550);
+        frame.setBounds(100, 100, 700, 550);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         frame.setVisible(true);
