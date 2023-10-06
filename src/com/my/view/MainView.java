@@ -343,8 +343,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
        */
     } else if (obj == addRecordButton1) {
       exerciseInsert();
-    } else if (obj == updataRecordButton1) {
-      exerciseUpdate();
     } else if (obj == deleteRecordButton1) {
       exerciseDelete();
       /*
@@ -352,8 +350,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
        */
     } else if (obj == addRecordButton2) {
       trainingInsert();
-    } else if (obj == updataRecordButton2) {
-      trainingUpdate();
     } else if (obj == deleteRecordButton2) {
       trainingDelete();
     }
@@ -396,37 +392,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
     buttonPanel.add(closeButton);
     dialog.add(buttonPanel, BorderLayout.SOUTH);
     dialog.setVisible(true);
-  }
-
-  // ID使用確認
-  public boolean isExerciseIdUsed(int exerciseId) throws SQLException {
-    boolean isUsed = false;
-    DbAccess db = new DbAccess();
-    db.open();
-
-    try {
-      String query = "SELECT COUNT(*) FROM exercises WHERE exercise_id = " + exerciseId;
-      ResultSet resultSet = db.executeQuery(query);
-
-      if (resultSet.next()) {
-        int count = resultSet.getInt(1);
-        if (count > 0) {
-          isUsed = true;
-        }
-      }
-
-      resultSet.close();
-    } finally {
-      db.close();
-    }
-
-    return isUsed;
-  }
-
-  // IDが数字かチェック
-  public boolean containsRomanCharacters(String input) {
-    String pattern = ".*\\D+.*";
-    return input.matches(pattern);
   }
 
   // 種目表示
@@ -574,39 +539,8 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
   public void exerciseInsert() {
     String title = "エラー";
-
     try {
-
-      String exerciseIdText = newExerciseTextField1.getText();
-
-      // IDが数字じゃない
-      if (containsRomanCharacters(exerciseIdText)) {
-        JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      // ID入力が入力されてない
-      if (exerciseIdText.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      int exercise_id = Integer.parseInt(exerciseIdText);
-
-      // IDが既に使われてるとき
-      if (isExerciseIdUsed(exercise_id)) {
-        JOptionPane.showMessageDialog(null, "IDは既に使用されています", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      // IDが数字じゃない
-      if (exercise_id < 0 || containsRomanCharacters(exerciseIdText)) {
-        JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
       String exercise_name = newExerciseTextField2.getText();
-
       // 種目が入力されていない
       if (exercise_name.isEmpty()) {
         JOptionPane.showMessageDialog(null, "種目が入力されていません", title, JOptionPane.ERROR_MESSAGE);
@@ -621,8 +555,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
       StringBuffer mySql = new StringBuffer();
       mySql.append("INSERT INTO exercises VALUES(");
-      mySql.append(SINGLE_QUOTATION + exercise_id + SINGLE_QUOTATION);
-      mySql.append(COMMA);
       mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION);
       mySql.append(")");
       System.out.println(mySql);
@@ -632,7 +564,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
       db.executeUpdate(mySql.toString());
 
       // トレーニングパネルのコンボボックスにデータを追加
-      model.insertElementAt(exercise_name, exercise_id - 1);
+      model.insertElementAt(exercise_name);
       newExerciseTextField1.setText("");
       newExerciseTextField2.setText("");
 
@@ -640,85 +572,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
       exerciseSelect();
 
     } catch (SQLException e) {
-      e.printStackTrace();
-
-    } catch (NumberFormatException e) {
-      e.printStackTrace();
-
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  public void exerciseUpdate() {
-    // メッセージボックスのタイトル
-    String title = "エラー";
-
-    try {
-      String exerciseIdText = newExerciseTextField1.getText();
-
-      // IDが数字じゃない
-      if (containsRomanCharacters(exerciseIdText)) {
-        JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      // ID入力が入力されてない
-      if (exerciseIdText.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      int exercise_id = Integer.parseInt(exerciseIdText);
-
-      String exercise_name = newExerciseTextField2.getText();
-
-      // 種目が入力されていない
-      if (exercise_name.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "種目が入力されていません", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      // 種目がすでに存在するかチェック
-      if (exerciseComboBox1.getItemCount() > 0 && exerciseComboBox1.getSelectedItem().equals(exercise_name)) {
-        JOptionPane.showMessageDialog(null, "種目がすでに存在します", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      // データベースの種目を更新
-      StringBuffer mySql = new StringBuffer();
-      mySql.append("UPDATE exercises SET ");
-      mySql.append("exercise_name = ");
-      mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION);
-      mySql.append(" WHERE exercise_id = ");
-      mySql.append(exercise_id);
-      System.out.println(mySql);
-      DbAccess db = new DbAccess();
-      db.open();
-      int rowsAffected = db.executeUpdate(mySql.toString());
-      db.close();
-
-      if (rowsAffected > 0) {
-        newExerciseTextField1.setText("");
-        newExerciseTextField2.setText("");
-        exerciseSelect();
-      } else {
-        JOptionPane.showMessageDialog(null, "指定されたIDが見つかりません", title, JOptionPane.ERROR_MESSAGE);
-      }
-
-      // コンボボックスのデータを更新
-      int index = exercise_id - 1;
-      if (index >= 0 && index < model.getSize()) {
-        model.removeElementAt(index);
-        model.insertElementAt(exercise_name, index);
-      }
-
-      newExerciseTextField1.setText("");
-      newExerciseTextField2.setText("");
-      exerciseSelect();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    } catch (NumberFormatException e) {
       e.printStackTrace();
     } catch (Exception e) {
       e.printStackTrace();
@@ -730,22 +583,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
     String title = "エラー";
 
     try {
-
-      String exerciseIdText = newExerciseTextField1.getText();
-
-      // IDが数字じゃない
-      if (containsRomanCharacters(exerciseIdText)) {
-        JOptionPane.showMessageDialog(null, "IDには数字を入力してください。", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      // ID入力が入力されていない
-      if (exerciseIdText.isEmpty()) {
-        JOptionPane.showMessageDialog(null, "ID が入力されていません", title, JOptionPane.ERROR_MESSAGE);
-        return;
-      }
-
-      int exercise_id = Integer.parseInt(exerciseIdText);
       String exercise_name = newExerciseTextField2.getText();
 
       // コンボボックスのサイズを取得
@@ -758,7 +595,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
       // 削除対象の行のIDが存在するか確認
       boolean idExists = false;
       /*
-       * iにIDを指定してそのIDに設定されてる種目を取得し、テキストフィールドに入力した種目と比較し同じだったらbreakする。 同じでなかったら
+       * iにIDを指定してそのIDに設定されてる種目を取得し、テキストフィールドに入力した種目と比較し同じだったらbreakする。
        */
       String tableName = model.getElementAt(exercise_id - 1).toString();
       if (exercise_name.equals(tableName)) {
@@ -870,48 +707,6 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
       mySql.append(set_times + COMMA);
       mySql.append(training_reps + COMMA);
       mySql.append(SINGLE_QUOTATION + record_date + SINGLE_QUOTATION + ")");
-      System.out.println(mySql);
-
-      DbAccess db = new DbAccess();
-      db.open();
-      db.executeUpdate(mySql.toString());
-      db.close();
-      trainingSelect();
-    } catch (SQLException e) {
-      e.printStackTrace();
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  public void trainingUpdate() {
-    // 更新
-    String exercise_name = textField1.getText();
-    textField1.setText("");
-    String set_times = textField2.getText();
-    textField2.setText("");
-    String training_reps = textField3.getText();
-    textField3.setText("");
-    String record_date = textField4.getText();
-    textField4.setText("");
-
-    try {
-      StringBuffer mySql = new StringBuffer();
-      mySql.append(" UPDATE records SET ");
-      mySql.append("exercise_name = ");
-      mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION + COMMA);
-      mySql.append(" set_times = ");
-      mySql.append(set_times + COMMA);
-      mySql.append(" training_reps = ");
-      mySql.append(training_reps + COMMA);
-      mySql.append(" record_date = ");
-      mySql.append(SINGLE_QUOTATION + record_date + SINGLE_QUOTATION);
-      mySql.append(" WHERE  exercise_name = ");
-      mySql.append(SINGLE_QUOTATION + exercise_name + SINGLE_QUOTATION);
-      mySql.append(" and ");
-      mySql.append(" record_date = ");
-      mySql.append(SINGLE_QUOTATION + record_date + SINGLE_QUOTATION);
-
       System.out.println(mySql);
 
       DbAccess db = new DbAccess();
