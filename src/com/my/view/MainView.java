@@ -65,7 +65,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
   // 種目
   private JPanel exerciseAddPanel, screenTransitionPanel2, newExercisePanel;
   private JLabel exerciseAddLabel, newExercisePanelLabel;
-  private JButton addRecordButton1, updataRecordButton1, deleteRecordButton1;
+  private JButton addRecordButton1, deleteRecordButton1;
   private JTable table2;
   private JTextField newExerciseTextField1, newExerciseTextField2;
   private JScrollPane scrollPane2;
@@ -75,7 +75,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
   private JPanel addRecordPanel, tittlePanel, setNumberPanel, screenTransitionPanel3, exercisePanel2;
   private JLabel addRecordLabel, label0, label1, label2, label3, label4;
   private JTextField textField1, textField2, textField3, textField4;
-  private JButton addRecordButton2, updataRecordButton2, deleteRecordButton2, calendarButton2;
+  private JButton addRecordButton2, deleteRecordButton2, calendarButton2;
   private JTable table3;
   private JScrollPane scrollPane3;
   private JComboBox<String> exerciseComboBox1;
@@ -587,7 +587,7 @@ public class MainView extends JFrame implements ActionListener, ItemListener {
 
       // コンボボックスのサイズを取得
       int comboSize = model.getSize();
-      if ((exercise_id < 0) || (0 == comboSize)) {
+      if (( < 0) || (0 == comboSize)) {
         JOptionPane.showMessageDialog(null, "データがありません", title, JOptionPane.ERROR_MESSAGE);
         return;
       }
